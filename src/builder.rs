@@ -40,6 +40,16 @@ macro_rules! un_op(
         }
     );
 );
+macro_rules! cast(
+    ($name:ident, $func:ident) => (
+        pub fn $name(&self, value: &Value, ty: &Type) -> &Value {
+            unsafe {
+                core::$func(self.into(), value.into(), ty.into(),
+                            NULL_NAME.as_ptr() as *const c_char)
+            }.into()
+        }
+    );
+);
 impl Builder {
     /// Create a new builder in the context given.
     pub fn new(context: &Context) -> CSemiBox<Builder> {
@@ -108,43 +118,30 @@ impl Builder {
         }
     }
     /// Build an instruction that converts `val` to a floating point `dest`.
-    pub fn build_fp_to_si(&self, val: &Value, dest: &Type) -> &Value {
-        unsafe { core::LLVMBuildFPToSI(self.into(), val.into(), dest.into(), NULL_NAME.as_ptr()).into() }
-    }
+    cast!{build_fp_to_si, LLVMBuildFPToSI}
+    cast!{build_fp_to_ui, LLVMBuildFPToUI}
     /// Build an instruction that converts `val` to an integer `dest`.
-    pub fn build_si_to_fp(&self, val: &Value, dest: &Type) -> &Value {
-        unsafe { core::LLVMBuildSIToFP(self.into(), val.into(), dest.into(), NULL_NAME.as_ptr()).into() }
-    }
+    cast!{build_si_to_fp, LLVMBuildSIToFP}
+    cast!{build_ui_to_fp, LLVMBuildUIToFP}
     /// Build an instruction that yields to `true_val` if `cond` is equal to `1`, and `false_val` otherwise.
     pub fn build_select(&self, cond: &Value, true_val: &Value, false_val: &Value) -> &Value {
         unsafe { core::LLVMBuildSelect(self.into(), cond.into(), true_val.into(), false_val.into(), NULL_NAME.as_ptr()).into() }
     }
     /// Build an instruction that casts a value into a certain type.
-    pub fn build_bit_cast(&self, value: &Value, dest: &Type) -> &Value {
-        unsafe { core::LLVMBuildBitCast(self.into(), value.into(), dest.into(), NULL_NAME.as_ptr()).into() }
-    }
+    cast!{build_bit_cast, LLVMBuildBitCast}
     /// Build an instruction that casts an integer to a pointer.
-    pub fn build_int_to_ptr(&self, val: &Value, dest: &Type) -> &Value {
-        unsafe {
-            core::LLVMBuildIntToPtr(self.into(), val.into(), dest.into(), NULL_NAME.as_ptr())
-                .into()
-        }
-    }
+    cast!{build_int_to_ptr, LLVMBuildIntToPtr}
     /// Build an instruction that casts a pointer to an integer.
-    pub fn build_ptr_to_int(&self, val: &Value, dest: &Type) -> &Value {
-        unsafe {
-            core::LLVMBuildPtrToInt(self.into(), val.into(), dest.into(), NULL_NAME.as_ptr())
-                .into()
-        }
-    }
+    cast!{build_ptr_to_int, LLVMBuildPtrToInt}
     /// Build an instruction that zero extends its operand to the type `dest`.
-    pub fn build_zext(&self, value: &Value, dest: &Type) -> &Value {
-        unsafe { core::LLVMBuildZExtOrBitCast(self.into(), value.into(), dest.into(), NULL_NAME.as_ptr()).into() }
-    }
+    cast!{build_zext, LLVMBuildZExtOrBitCast}
+    cast!{build_sext, LLVMBuildSExtOrBitCast}
     /// Build an instruction that truncates the high-order bits of value to fit into a certain type.
-    pub fn build_trunc(&self, value: &Value, dest: &Type) -> &Value {
-        unsafe { core::LLVMBuildTrunc(self.into(), value.into(), dest.into(), NULL_NAME.as_ptr()).into() }
-    }
+    cast!{build_trunc, LLVMBuildTrunc}
+    cast!{build_fpcast, LLVMBuildFPCast}
+    cast!{build_fpext, LLVMBuildFPExt}
+    cast!{build_fptrunc, LLVMBuildFPTrunc}
+
     /// Build an instruction that inserts a value into an aggregate data value.
     pub fn build_insert_value(&self, agg: &Value, elem: &Value, index: usize) -> &Value {
         unsafe { core::LLVMBuildInsertValue(self.into(), agg.into(), elem.into(), index as c_uint, NULL_NAME.as_ptr()).into() }
@@ -183,8 +180,12 @@ impl Builder {
     bin_op!{build_sub, LLVMBuildSub, LLVMBuildFSub}
     bin_op!{build_mul, LLVMBuildMul, LLVMBuildFMul}
     bin_op!{build_div, LLVMBuildSDiv, LLVMBuildFDiv}
+    bin_op!{build_rem, LLVMBuildSRem, LLVMBuildFRem}
+    bin_op!{build_udiv, LLVMBuildUDiv}
+    bin_op!{build_urem, LLVMBuildURem}
     bin_op!{build_shl, LLVMBuildShl}
     bin_op!{build_ashr, LLVMBuildAShr}
+    bin_op!{build_lshr, LLVMBuildLShr}
     bin_op!{build_and, LLVMBuildAnd}
     bin_op!{build_or, LLVMBuildOr}
     bin_op!{build_xor, LLVMBuildXor}
