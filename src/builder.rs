@@ -4,7 +4,8 @@ use ffi::{core, LLVMBuilder, LLVMRealPredicate, LLVMIntPredicate};
 use cbox::CSemiBox;
 use std::marker::PhantomData;
 use block::BasicBlock;
-use context::Context;
+use compile::Compile;
+use context::{Context, GetContext};
 use types::Type;
 use value::{Function, Value, Predicate};
 
@@ -156,9 +157,19 @@ impl Builder {
     pub fn build_insert_value(&self, agg: &Value, elem: &Value, index: usize) -> &Value {
         unsafe { core::LLVMBuildInsertValue(self.into(), agg.into(), elem.into(), index as c_uint, NULL_NAME.as_ptr()).into() }
     }
-    /// Build an instruction that extracta a value from an aggregate data value.
+    /// Build an instruction that extracts a value from an aggregate data value.
     pub fn build_extract_value(&self, agg: &Value, index: usize) -> &Value {
         unsafe { core::LLVMBuildExtractValue(self.into(), agg.into(), index as c_uint, NULL_NAME.as_ptr()).into() }
+    }
+    /// Build an instruction that shuffles two vectors into one vector.
+    pub fn build_shuffle_vector(&self, lhs: &Value, rhs: &Value, mask: &[u32]) -> &Value {
+        let mut mask_vals : Vec<LLVMValueRef> = mask.iter()
+            .map(|m| m.compile(lhs.get_context()).into())
+            .collect();
+        unsafe {
+            let mask = core::LLVMConstVector(mask_vals.as_mut_ptr(), mask_vals.len() as c_uint);
+            core::LLVMBuildShuffleVector(self.into(), lhs.into(), rhs.into(), mask, NULL_NAME.as_ptr()).into()
+        }
     }
     /// Build an instruction that computes the address of a subelement of an aggregate data structure.
     ///
