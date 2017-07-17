@@ -161,6 +161,14 @@ impl Builder {
     pub fn build_extract_value(&self, agg: &Value, index: usize) -> &Value {
         unsafe { core::LLVMBuildExtractValue(self.into(), agg.into(), index as c_uint, NULL_NAME.as_ptr()).into() }
     }
+    /// Build an instruction that inserts a value into a vector value.
+    pub fn build_insert_element(&self, agg: &Value, elem: &Value, index: &Value) -> &Value {
+        unsafe { core::LLVMBuildInsertElement(self.into(), agg.into(), elem.into(), index.into(), NULL_NAME.as_ptr()).into() }
+    }
+    /// Build an instruction that extracts a value from a vector value.
+    pub fn build_extract_element(&self, agg: &Value, index: &Value) -> &Value {
+        unsafe { core::LLVMBuildExtractElement(self.into(), agg.into(), index.into(), NULL_NAME.as_ptr()).into() }
+    }
     /// Build an instruction that shuffles two vectors into one vector.
     pub fn build_shuffle_vector(&self, lhs: &Value, rhs: &Value, mask: &[u32]) -> &Value {
         let mut mask_vals : Vec<LLVMValueRef> = mask.iter()
