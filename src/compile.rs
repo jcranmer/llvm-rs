@@ -169,6 +169,10 @@ compile_array!{[T; 3], 3}
 compile_array!{[T; 4], 4}
 compile_array!{[T; 5], 5}
 compile_array!{[T; 6], 6}
+compile_array!{[T; 7], 7}
+compile_array!{[T; 8], 8}
+compile_array!{[T; 16], 32}
+compile_array!{[T; 32], 32}
 
 macro_rules! compile_func(
     ($($name:ident),*) => (
